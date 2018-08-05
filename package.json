@@ -1,0 +1,13 @@
+{
+  "name": "elife-skill-mgr",
+  "version": "0.1.0",
+  "description": "The Everlife Skill Manager",
+  "main": "index.js",
+  "author": "charles.lobo@gmail.com",
+  "license": "MIT",
+  "dependencies": {
+    "cote": "^0.17.0",
+    "elife-pkg-mgr": "everlifeai/elife-pkg-mgr",
+    "pm2": "^3.0.3"
+  }
+}
