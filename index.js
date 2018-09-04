@@ -3,6 +3,7 @@ const cote = require('cote')
 const pm2 = require('pm2')
 const pkgmgr = require('elife-pkg-mgr')
 const u = require('elife-utils')
+const path = require('path')
 
 
 /*      understand/
@@ -14,6 +15,7 @@ const u = require('elife-utils')
 function main() {
     let conf = loadConfig()
     startSkillMicroservice(conf)
+    registerWithCommMgr(conf)
 }
 
 /*      outcome/
@@ -30,6 +32,34 @@ function loadConfig() {
 }
 
 
+const commMgrClient = new cote.Requester({
+    name: 'SkillMgr -> CommMgr',
+    key: 'everlife-communication-svc',
+})
+
+function sendReply(msg, req) {
+    req.type = 'reply'
+    req.msg = msg
+    commMgrClient.send(req, (err) => {
+        if(err) u.showErr(err)
+    })
+}
+
+let msKey = 'everlife-skill-svc'
+/*      outcome/
+ * Register ourselves as a message handler with the communication
+ * manager so we can handle requests for installation of new skills.
+ */
+function registerWithCommMgr(conf) {
+    commMgrClient.send({
+        type: 'register-msg-handler',
+        mskey: msKey,
+        mstype: 'msg',
+    }, (err) => {
+        if(err) u.showErr(err)
+    })
+}
+
 function startSkillMicroservice(cfg) {
 
     /*      understand/
@@ -38,9 +68,33 @@ function startSkillMicroservice(cfg) {
      */
     const skillMgrSvc = new cote.Responder({
         name: 'Everlife Skill Manager Service',
-        key: 'everlife-skill-svc',
+        key: msKey,
     })
 
+    /*      outcome/
+     * Respond to user messages asking us to install new skills
+     */
+    skillMgrSvc.on('msg', (req, cb) => {
+        if(!req.msg || !req.msg.match) return cb()
+
+        const rx = /^install  *(.*)/i
+        let m = req.msg.match(rx)
+        if(!m) return cb()
+        cb(null, true)
+
+        let pkg = `everlifeai/${m[1]}`
+        pkg = pkg.trim()
+        if(!pkg) sendReply(`What should I install?`)
+        else install(
+            cfg,
+            (msg) => sendReply(msg, req),
+            pkg,
+            (err) => {
+                if(err) sendReply(`Error! ${err}`, req)
+                else sendReply(`install done`, req)
+            }
+        )
+    })
 
     /*      outcome/
      * Responds to a request for adding a new service
@@ -49,21 +103,23 @@ function startSkillMicroservice(cfg) {
      */
     skillMgrSvc.on('add', (req, cb) => {
         if(!req.pkg) cb('No skill package found')
+        else install(cfg, u.showMsg, req.pkg, cb)
+    })
+
+}
+
+function install(cfg, o, pkg, cb) {
+    o(`Installing ${pkg}...`)
+    pkgmgr.load(pkg, cfg.SKILL_FOLDER, (err, loc) => {
+        if(err) cb(err)
         else {
-            u.showMsg(`Installing ${req.pkg}...`)
-            pkgmgr.load(req.pkg, cfg.SKILL_FOLDER, (err, loc) => {
+            o(`Starting ${pkg}...`)
+            pm2.connect((err) => {
                 if(err) cb(err)
-                else {
-                    u.showMsg(`Starting ${req.pkg}...`)
-                    pm2.connect((err) => {
-                        if(err) cb(err)
-                        else startProcess(loc, cb)
-                    })
-                }
+                else startProcess(loc, cb)
             })
         }
     })
-
 }
 
 function startProcess(cwd, cb) {
