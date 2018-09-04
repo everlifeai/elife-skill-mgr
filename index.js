@@ -84,7 +84,7 @@ function startSkillMicroservice(cfg) {
 
         let pkg = `everlifeai/${m[1]}`
         pkg = pkg.trim()
-        if(!pkg) sendReply(`What should I install?`)
+        if(!pkg) sendReply(`What should I install?`, req)
         else install(
             cfg,
             (msg) => sendReply(msg, req),
