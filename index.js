@@ -113,14 +113,43 @@ function install(cfg, o, pkg, cb) {
     pkgmgr.load(pkg, cfg.SKILL_FOLDER, (err, loc) => {
         if(err) cb(err)
         else {
-            o(`Starting ${pkg}...`)
-            pm2.connect((err) => {
-                if(err) cb(err)
-                else startProcess(loc, cb)
+            // TODO: this may need to be in a better location
+            // TODO: Check that package is not already installed
+            saveToSSB(pkg, (err) => {
+                if(err) u.showErr(err)
+                else {
+                    o(`Starting ${pkg}...`)
+                    pm2.connect((err) => {
+                        if(err) cb(err)
+                        else startProcess(loc, cb)
+                    })
+                }
             })
         }
     })
 }
+
+/*      understand/
+ * The queue microservice manages task queues
+ */
+let workq = new cote.Requester({
+    name: 'SkillMgr -> Work Queue',
+    key: 'everlife-workq-svc',
+})
+/*      outcome/
+ * Use the queue microservice to properly stack messages for SSB.
+ */
+function saveToSSB(pkg, cb) {
+    workq.send({
+        type: 'q',
+        q: 'everlife-ssb-svc',
+        data: {
+            type: 'new-msg',
+            msg: { type: 'install-skill', pkg: pkg },
+        },
+    }, cb)
+}
+
 
 function startProcess(cwd, cb) {
     let name = path.basename(cwd)
