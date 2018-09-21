@@ -4,6 +4,7 @@ const pm2 = require('pm2')
 const pkgmgr = require('elife-pkg-mgr')
 const u = require('elife-utils')
 const path = require('path')
+const fs = require('fs')
 
 
 /*      understand/
@@ -16,6 +17,9 @@ function main() {
     let conf = loadConfig()
     startSkillMicroservice(conf)
     registerWithCommMgr(conf)
+    startSkillsInFolder(conf,(err)=>{
+        if(err) console.log(err)
+    })
 }
 
 /*      outcome/
@@ -96,6 +100,7 @@ function startSkillMicroservice(cfg) {
         )
     })
 
+
     /*      outcome/
      * Responds to a request for adding a new service
      * TODO: Keep Skill Registry
@@ -163,5 +168,29 @@ function startProcess(cwd, cb) {
     pm2.start(opts, cb)
 }
 
-main()
+/**
+ *  /outcome
+ * starting the installed skill service 
+ */
+function startSkillsInFolder(cfg,cb){
 
+    fs.readdir(cfg.SKILL_FOLDER,function(err,files){
+        for(const file of files){
+            const loc = path.join(cfg.SKILL_FOLDER,file)
+            if(fs.lstatSync(loc).isDirectory()){
+                if(err) u.showErr(err)
+                else {
+                    console.log(`Starting ${file}...`)
+                    pm2.connect((err) => {
+                        if(err) cb(err)
+                        else startProcess(loc, cb)
+                    })
+                }
+
+
+            }
+        }
+    })
+}
+
+main()
