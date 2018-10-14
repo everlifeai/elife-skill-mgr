@@ -1,5 +1,5 @@
 'use strict'
-const cote = require('cote')
+const cote = require('cote')({statusLogsEnabled:false})
 const pm2 = require('pm2')
 const pkgmgr = require('elife-pkg-mgr')
 const u = require('elife-utils')
