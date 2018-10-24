@@ -59,6 +59,7 @@ function registerWithCommMgr(conf) {
         type: 'register-msg-handler',
         mskey: msKey,
         mstype: 'msg',
+        mshelp: [ { cmd: '/install', txt: 'install a new skill' } ],
     }, (err) => {
         if(err) u.showErr(err)
     })
