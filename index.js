@@ -82,7 +82,7 @@ function startSkillMicroservice(cfg) {
     skillMgrSvc.on('msg', (req, cb) => {
         if(!req.msg || !req.msg.match) return cb()
 
-        const rx = /^install  *(.*)/i
+        const rx = /^\/install  *(.*)/i
         let m = req.msg.match(rx)
         if(!m) return cb()
         cb(null, true)
