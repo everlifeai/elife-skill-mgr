@@ -11,14 +11,15 @@ const fs = require('fs')
  * This is the main entry point where we start.
  *
  *      outcome/
- * Load any configuration information and start the microservice.
+ * Load any configuration information, start existing skills,
+ * start the microservice and register for commands with the
+ * communication manager.
  */
 function main() {
     let conf = loadConfig()
-    startSkillMicroservice(conf)
-    registerWithCommMgr(conf)
-    startSkillsInFolder(conf,(err)=>{
-        if(err) console.log(err)
+    startSkillsInFolder(conf, u.showMsg, u.showErr, ()=> {
+        startSkillMicroservice(conf)
+        registerWithCommMgr(conf)
     })
 }
 
@@ -170,29 +171,40 @@ function startProcess(cwd, cb) {
 }
 
 /**
- *  /outcome
- * starting the installed skill service 
+ *      outcome/
+ * Upgrade and start all skill sub-folders in the skills/ directory.
  */
-function startSkillsInFolder(cfg,cb){
+function startSkillsInFolder(cfg, o, e, cb){
 
-    fs.readdir(cfg.SKILL_FOLDER,function(err,files){
-        if(err) cb(err)
-        else{
-            for(const file of files){
-                const loc = path.join(cfg.SKILL_FOLDER,file)
-                if(fs.lstatSync(loc).isDirectory()){
-                    if(err) u.showErr(err)
-                    else {
-                        console.log(`Starting ${file}...`)
-                        pm2.connect((err) => {
-                            if(err) cb(err)
-                            else startProcess(loc, cb)
-                        })
-                    }
+    fs.readdir(cfg.SKILL_FOLDER, (err, files) => {
+        if(err) e(err)
+        else handle_file_ndx_1(files, 0)
+
+        function handle_file_ndx_1(files, ndx) {
+            if(ndx >= files.length) return
+            let loc = path.join(cfg.SKILL_FOLDER, files[ndx])
+            fs.lstat(loc, (err, stat) => {
+                if(!err && stat.isDirectory()) {
+                    upgrade_and_start_1(loc, (err) => {
+                        if(err) e(err)
+                        handle_file_ndx_1(files, ndx+1)
+                    })
                 }
-            }
+                else handle_file_ndx_1(files, ndx+1)
+            })
         }
     })
+
+    function upgrade_and_start_1(loc, cb) {
+        pkgmgr.update(loc, (err) => {
+            if(err) e(err)
+            o(`Starting ${loc}...`)
+            pm2.connect((err) => {
+                if(err) cb(err)
+                else startProcess(loc, cb)
+            })
+        })
+    }
 }
 
 main()
