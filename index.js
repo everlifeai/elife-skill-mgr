@@ -88,7 +88,7 @@ function startSkillMicroservice(cfg) {
         if(!m) return cb()
         cb(null, true)
 
-        let pkg = `everlifeai/${m[1]}`
+        let pkg = m[1]
         pkg = pkg.trim()
         if(!pkg) sendReply(`What should I install?`, req)
         else install(
@@ -120,12 +120,10 @@ function install(cfg, o, pkg, cb) {
     pkgmgr.load(pkg, cfg.SKILL_FOLDER, (err, loc) => {
         if(err) cb(err)
         else {
-            // TODO: this may need to be in a better location
-            // TODO: Check that package is not already installed
-            saveToSSB(pkg, (err) => {
+            saveToSSB(loc, (err) => {
                 if(err) u.showErr(err)
                 else {
-                    o(`Starting ${pkg}...`)
+                    o(`Starting ${loc}...`)
                     pm2.connect((err) => {
                         if(err) cb(err)
                         else startProcess(loc, cb)
