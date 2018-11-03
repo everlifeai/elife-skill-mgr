@@ -181,7 +181,10 @@ function startSkillsInFolder(cfg, o, e, cb){
         else handle_file_ndx_1(files, 0)
 
         function handle_file_ndx_1(files, ndx) {
-            if(ndx >= files.length) return
+            if(ndx >= files.length) {
+                cb()
+                return
+            }
             let loc = path.join(cfg.SKILL_FOLDER, files[ndx])
             fs.lstat(loc, (err, stat) => {
                 if(!err && stat.isDirectory()) {
