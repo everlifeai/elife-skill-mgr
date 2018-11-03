@@ -31,7 +31,7 @@ function loadConfig() {
     if(process.env.SKILL_FOLDER) {
         cfg.SKILL_FOLDER = process.env.SKILL_FOLDER;
     } else {
-        cfg.SKILL_FOLDER = "./skills";
+        cfg.SKILL_FOLDER = "/skills";
     }
     return cfg;
 }
