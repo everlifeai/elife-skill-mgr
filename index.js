@@ -135,26 +135,22 @@ function install(cfg, o, pkg, cb) {
 }
 
 /*      understand/
- * The queue microservice manages task queues
+ * The ssb microservice for storing ssb messages
  */
-let workq = new cote.Requester({
-    name: 'SkillMgr -> Work Queue',
-    key: 'everlife-workq-svc',
+let ssb = new cote.Requester({
+    name: 'SkillMgr -> SSB',
+    key: 'everlife-ssb-svc',
 })
+
 /*      outcome/
- * Use the queue microservice to properly stack messages for SSB.
+ * Use the ssb microservice to save our installed skills
  */
 function saveToSSB(pkg, cb) {
-    workq.send({
-        type: 'q',
-        q: 'everlife-ssb-svc',
-        data: {
-            type: 'new-msg',
-            msg: { type: 'install-skill', pkg: pkg },
-        },
+    ssb.send({
+        type: 'new-msg',
+        msg: { type: 'install-skill', pkg: pkg },
     }, cb)
 }
-
 
 function startProcess(cwd, cb) {
     let name = path.basename(cwd)
