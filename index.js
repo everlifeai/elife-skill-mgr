@@ -17,7 +17,7 @@ const fs = require('fs')
  */
 function main() {
     let conf = loadConfig()
-    startSkillsInFolder(conf, u.showMsg, u.showErr, ()=> {
+    startSkillsInFolders(conf, u.showMsg, u.showErr, ()=> {
         startSkillMicroservice(conf)
         registerWithCommMgr(conf)
     })
@@ -165,32 +165,72 @@ function startProcess(cwd, cb) {
 }
 
 /**
- *      outcome/
- * Upgrade and start all skill sub-folders in the skills/ directory.
+ *      situation/
+ * We have two skill folders -
+ *  (1) A set of 'core' skills released by Everlife
+ *      (found in the sub-directory ./skills)
+ *  (2) User downloaded skills
+ *      (found in the user skill directory)
+ *
+ *      problem/
+ * We would like to load all core and user skills allowing the user to
+ * over-ride any core skill that they want (user skills take
+ * precedence).
+ *
+ *      way/
+ * We walk the core skill directory and the user skill directory and
+ * discard any duplicate skills from the core directory. Then we upgrade
+ * and start all the skill folders available.
  */
-function startSkillsInFolder(cfg, o, e, cb){
+function startSkillsInFolders(cfg, o, e, cb){
 
-    fs.readdir(cfg.SKILL_FOLDER, (err, files) => {
+    const CORE_SKILL_DIR = './skills'
+
+    fs.readdir(CORE_SKILL_DIR, (err, core_files) => {
         if(err) e(err)
-        else handle_file_ndx_1(files, 0)
+        else fs.readdir(cfg.SKILL_FOLDER, (err, user_files) => {
+            if(err) e(err)
+            else {
+                core_files = discard_duplicates(user_files, core_files)
+                let files = []
+                files = files.concat(make_full_paths_1(CORE_SKILL_DIR, core_files))
+                files = files.concat(make_full_paths_1(cfg.SKILL_FOLDER, user_files))
 
-        function handle_file_ndx_1(files, ndx) {
-            if(ndx >= files.length) {
-                cb()
-                return
+                handle_file_ndx_1(files, 0)
             }
-            let loc = path.join(cfg.SKILL_FOLDER, files[ndx])
-            fs.lstat(loc, (err, stat) => {
-                if(!err && stat.isDirectory()) {
-                    upgrade_and_start_1(loc, (err) => {
-                        if(err) e(err)
-                        handle_file_ndx_1(files, ndx+1)
-                    })
-                }
-                else handle_file_ndx_1(files, ndx+1)
-            })
-        }
+        })
     })
+
+    function discard_duplicates(user_files, core_files) {
+        return core_files.filter((f) => {
+            for(let i = 0;i < user_files.length;i++) {
+                if(f == user_files[i]) return false
+            }
+            return true
+        })
+    }
+
+    function make_full_paths_1(root, files) {
+        return files.map((f) => path.join(root, f))
+    }
+
+    function handle_file_ndx_1(files, ndx) {
+        if(ndx >= files.length) {
+            cb()
+            return
+        }
+        let file = files[ndx]
+        fs.lstat(file, (err, stat) => {
+            if(!err && stat.isDirectory()) {
+                upgrade_and_start_1(file, (err) => {
+                    if(err) e(err)
+                    handle_file_ndx_1(files, ndx+1)
+                })
+            } else {
+                handle_file_ndx_1(files, ndx+1)
+            }
+        })
+    }
 
     function upgrade_and_start_1(loc, cb) {
         pkgmgr.update(loc, (err) => {
