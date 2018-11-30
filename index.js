@@ -222,13 +222,25 @@ function startSkillsInFolders(cfg, o, e, cb){
         let file = files[ndx]
         fs.lstat(file, (err, stat) => {
             if(!err && stat.isDirectory()) {
-                upgrade_and_start_1(file, (err) => {
+                just_start_1(file, (err) => {
                     if(err) e(err)
                     handle_file_ndx_1(files, ndx+1)
                 })
             } else {
                 handle_file_ndx_1(files, ndx+1)
             }
+        })
+    }
+
+    /*      outcome/
+     * Don't upgrade and start - git and yarn
+     * failing on windows OS
+     */
+    function just_start_1(loc, cb) {
+        o(`Starting ${loc}...`)
+        pm2.connect((err) => {
+            if(err) cb(err)
+            else startProcess(loc, cb)
         })
     }
 
