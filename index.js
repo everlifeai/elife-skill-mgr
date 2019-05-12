@@ -124,7 +124,7 @@ function install(cfg, o, pkg, cb) {
                 if(err) u.showErr(err)
                 else {
                     o(`Starting ${loc}...`)
-                    pm2.connect((err) => {
+                    pm2.connect(true, (err) => {
                         if(err) cb(err)
                         else startProcess(loc, cb)
                     })
@@ -238,7 +238,7 @@ function startSkillsInFolders(cfg, o, e, cb){
      */
     function just_start_1(loc, cb) {
         o(`Starting ${loc}...`)
-        pm2.connect((err) => {
+        pm2.connect(true, (err) => {
             if(err) cb(err)
             else startProcess(loc, cb)
         })
@@ -248,7 +248,7 @@ function startSkillsInFolders(cfg, o, e, cb){
         pkgmgr.update(loc, (err) => {
             if(err) e(err)
             o(`Starting ${loc}...`)
-            pm2.connect((err) => {
+            pm2.connect(true, (err) => {
                 if(err) cb(err)
                 else startProcess(loc, cb)
             })
