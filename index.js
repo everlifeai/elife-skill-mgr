@@ -154,7 +154,7 @@ function saveToSSB(pkg, cb) {
 
 function startProcess(cwd, cb) {
     let name = path.basename(cwd)
-    let lg = path.join(__dirname, 'logs', `${name}.log`)
+    let lg = path.join(u.logsLoc(), `${name}.log`)
     let opts = {
         name: name,
         script: "index.js",
