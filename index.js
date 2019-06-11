@@ -184,7 +184,7 @@ function startProcess(cwd, cb) {
  */
 function startSkillsInFolders(cfg, o, e, cb){
 
-    const CORE_SKILL_DIR = './skills'
+    const CORE_SKILL_DIR = path.join(__dirname, 'skills')
 
     fs.readdir(CORE_SKILL_DIR, (err, core_files) => {
         if(err) e(err)
