@@ -1,6 +1,6 @@
 {
   "name": "elife-skill-mgr",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "The Everlife Skill Manager",
   "main": "index.js",
   "author": "charles.lobo@gmail.com",
