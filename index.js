@@ -117,7 +117,7 @@ function startSkillMicroservice(cfg) {
 
 function install(cfg, o, pkg, cb) {
     o(`Installing ${pkg}...`)
-    pkgmgr.load(pkg, cfg.SKILL_FOLDER, (err, loc) => {
+    pkgmgr.installLatest(pkg, cfg.SKILL_FOLDER, (err, loc) => {
         if(err) cb(err)
         else {
             saveToSSB(loc, (err) => {
