@@ -1,8 +1,8 @@
 'use strict'
 const cote = require('cote')({statusLogsEnabled:false})
 const pm2 = require('pm2')
-const pkgmgr = require('elife-pkg-mgr')
-const u = require('elife-utils')
+const pkgmgr = require('@elife/pkg-mgr')
+const u = require('@elife/utils')
 const path = require('path')
 const fs = require('fs')
 
@@ -117,21 +117,24 @@ function startSkillMicroservice(cfg) {
 
 function install(cfg, o, pkg, cb) {
     o(`Installing ${pkg}...`)
-    pkgmgr.installLatest(pkg, cfg.SKILL_FOLDER, (err, loc) => {
-        if(err) cb(err)
-        else {
-            saveToSSB(loc, (err) => {
-                if(err) u.showErr(err)
-                else {
-                    o(`Starting ${loc}...`)
-                    pm2.connect(true, (err) => {
-                        if(err) cb(err)
-                        else startProcess(loc, cb)
-                    })
-                }
-            })
-        }
+    stopProcess(pkg,(err) => {
+        pkgmgr.installLatest(pkg, cfg.SKILL_FOLDER, (err, loc) => {
+            if(err) cb(err)
+            else {
+                saveToSSB(loc, (err) => {
+                    if(err) u.showErr(err)
+                    else {
+                        o(`Starting ${loc}...`)
+                        pm2.connect(true, (err) => {
+                            if(err) cb(err)
+                            else startProcess(loc, cb)
+                        })
+                    }
+                })
+            }
+        })
     })
+    
 }
 
 /*      understand/
@@ -162,6 +165,11 @@ function startProcess(cwd, cb) {
         log: lg,
     }
     pm2.start(opts, cb)
+}
+
+function stopProcess(pkg, cb) {
+    let cwd = pkgmgr.normalize(pkg)
+    pm2.stop(cwd.name, cb)
 }
 
 /**
