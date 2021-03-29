@@ -21,7 +21,21 @@ function main() {
         startSkillMicroservice(conf)
         registerWithCommMgr(conf)
     })
+    shutdownChildren()
 }
+
+function shutdownChildren() {
+    process.on('SIGINT', stop_1)
+    process.on('SIGTERM', stop_1)
+
+    function stop_1() {
+        pm2.forEach(pi => {
+            if(pi.name) u.showMsg(`Stopping ${pi.name} (pid: ${pi.child.pid})`)
+            pm2.stop(pi)
+        })
+    }
+}
+
 
 /*      outcome/
  * Load the configuration (from environment variables) or defaults
