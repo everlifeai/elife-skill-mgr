@@ -181,7 +181,8 @@ function startProcess(cwd, cb) {
 
 function stopProcess(pkg, cb) {
     let cwd = pkgmgr.normalize(pkg)
-    pm2.stop(cwd.name, cb)
+    pm2.stopByName(cwd.name)
+    cb()
 }
 
 /**
